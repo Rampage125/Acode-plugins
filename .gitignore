@@ -1,0 +1,9 @@
+# System
+.DS_Store
+Thumbs.db
+
+# Zip archives
+*.zip
+
+# Node
+node_modules/

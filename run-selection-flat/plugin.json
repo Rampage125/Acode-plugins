@@ -1,0 +1,16 @@
+{
+  "id": "com.custom.run-selection",
+  "name": "Run Selection",
+  "main": "main.js",
+  "version": "1.0.0",
+  "readme": "readme.md",
+  "icon": "icon.png",
+  "files": [],
+  "minVersionCode": 290,
+  "price": 0,
+  "author": {
+    "name": "custom",
+    "email": "custom@example.com",
+    "github": "custom"
+  }
+}
