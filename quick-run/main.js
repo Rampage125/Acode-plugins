@@ -13,6 +13,30 @@ if (window.acode) {
     saveBeforeRun: true,
     buttonSize:    '50',
     buttonColor:   '#e513d3',
+    interpreter:   'auto',
+  };
+
+  // Карта расширение → интерпретатор (режим auto)
+  const INTERPRETERS = {
+    py:    'python',
+    py3:   'python3',
+    sh:    'bash',
+    bash:  'bash',
+    zsh:   'zsh',
+    js:    'node',
+    mjs:   'node',
+    cjs:   'node',
+    ts:    'ts-node',
+    rb:    'ruby',
+    php:   'php',
+    pl:    'perl',
+    lua:   'lua',
+    r:     'Rscript',
+    go:    'go run',
+    dart:  'dart',
+    kts:   'kotlinc -script',
+    java:  'java',
+    swift: 'swift',
   };
 
   const settingsList = [
@@ -35,6 +59,14 @@ if (window.acode) {
       text: 'Button color',
       value: DEFAULTS.buttonColor,
       prompt: 'CSS color e.g. #e513d3',
+      promptType: 'text',
+    },
+    {
+      key: 'interpreter',
+      text: 'Interpreter',
+      info: 'auto — по расширению файла. Или задай вручную: python, bash, node, php... Пусто — запуск через ./file (shebang)',
+      value: DEFAULTS.interpreter,
+      prompt: 'auto | python | bash | node | ... | (пусто = ./file)',
       promptType: 'text',
     },
   ];
@@ -62,6 +94,30 @@ if (window.acode) {
 
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+  // Строит команду запуска на основе настройки interpreter и имени файла
+  function buildCommand(filename) {
+    const raw = currentSettings.interpreter;
+    const mode = (raw === undefined || raw === null) ? DEFAULTS.interpreter : String(raw).trim();
+    const q = "'" + filename.replace(/'/g, "'\\''") + "'";
+
+    // Пустая строка → прямой запуск (для файлов с shebang)
+    if (mode === '') return './' + q;
+
+    if (mode.toLowerCase() === 'auto') {
+      const dot = filename.lastIndexOf('.');
+      const ext = dot > 0 ? filename.slice(dot + 1).toLowerCase() : '';
+      const interp = INTERPRETERS[ext];
+      if (!interp) {
+        window.toast('Неизвестное расширение .' + (ext || '?') + ' → bash', 2000);
+        return 'bash ' + q;
+      }
+      return interp + ' ' + q;
+    }
+
+    // Ручной режим: значение подставляется как есть
+    return mode + ' ' + q;
+  }
+
   async function runFile(clearFirst) {
     if (getSetting('saveBeforeRun')) {
       try { acode.exec('save'); } catch(_) {}
@@ -82,7 +138,7 @@ if (window.acode) {
         acodeX.execute('clear');
         await sleep(300);
       }
-      acodeX.execute("python '" + filename + "'");
+      acodeX.execute(buildCommand(filename));
     } else {
       window.toast('AcodeX не найден', 3000);
     }
@@ -210,6 +266,7 @@ if (window.acode) {
     if (store.buttonSize)  currentSettings.buttonSize  = store.buttonSize;
     if (store.buttonColor) currentSettings.buttonColor = store.buttonColor;
     if (store.saveBeforeRun !== undefined) currentSettings.saveBeforeRun = store.saveBeforeRun;
+    if (store.interpreter  !== undefined) currentSettings.interpreter  = store.interpreter;
 
     await sleep(800);
     buildButton();
